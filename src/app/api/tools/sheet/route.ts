@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -8,7 +10,8 @@ const SCOPES = [
 ];
 
 async function getAuthClient() {
-  const credentials = require("/root/.openclaw/workspace/hub/tools/service-account.json");
+  const credPath = join(process.cwd(), "service-account.json");
+  const credentials = JSON.parse(readFileSync(credPath, "utf-8"));
   
   return new JWT({
     email: credentials.client_email,

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/documents",
@@ -8,8 +10,9 @@ const SCOPES = [
 ];
 
 async function getAuthClient() {
-  // Read service account credentials
-  const credentials = require("/root/.openclaw/workspace/hub/tools/service-account.json");
+  // Read service account credentials from file
+  const credPath = join(process.cwd(), "service-account.json");
+  const credentials = JSON.parse(readFileSync(credPath, "utf-8"));
   
   return new JWT({
     email: credentials.client_email,
@@ -34,7 +37,7 @@ export async function POST(req: NextRequest) {
     
     // Add content if provided
     if (content) {
-      await docs.documents.batchUpdate({
+      await docs.documents().batchUpdate({
         documentId: docId!,
         requestBody: {
           requests: [
