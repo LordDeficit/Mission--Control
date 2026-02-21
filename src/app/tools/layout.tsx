@@ -1,12 +1,12 @@
 "use client";
 
-import Board from "@/components/Board";
+import Tools from "./Tools";
 import NavLayout from "@/components/NavLayout";
 
-export default function Home() {
+export default function ToolsPage() {
   return (
     <NavLayout>
-      <Board />
+      <Tools />
     </NavLayout>
   );
 }
