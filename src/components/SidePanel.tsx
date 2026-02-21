@@ -1,18 +1,7 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import TextStyle from "@tiptap/extension-text-style";
-import Color from "@tiptap/extension-color";
-import TextAlign from "@tiptap/extension-text-align";
-import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import Highlight from "@tiptap/extension-highlight";
-import CharacterCount from "@tiptap/extension-character-count";
-import Placeholder from "@tiptap/extension-placeholder";
+import { useState, useEffect } from "react";
 import { Card } from "@/types";
-import TiptapToolbar from "./TiptapToolbar";
 
 interface SidePanelProps {
   card: Card | null;
@@ -21,33 +10,11 @@ interface SidePanelProps {
 }
 
 export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Underline,
-      TextStyle,
-      Color,
-      Highlight.configure({ multicolor: true }),
-      TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Image.configure({ inline: true, allowBase64: true }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: "text-blue-400 underline" },
-      }),
-      CharacterCount,
-      Placeholder.configure({
-        placeholder: "Type '/' for commands or just start writing...",
-      }),
-    ],
-    content: card?.description || "<p>Start writing...",
-    editorProps: {
-      attributes: {
-        class: "prose prose-invert prose-sm max-w-none focus:outline-none min-h-[300px] px-4 py-3",
-      },
-    },
-  });
+  const [description, setDescription] = useState(card?.description || "");
+  
+  useEffect(() => {
+    setDescription(card?.description || "");
+  }, [card?.description]);
 
   if (!card) return null;
 
@@ -65,8 +32,12 @@ export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
     high: "text-red-500",
   };
 
-  const wordCount = editor?.storage.characterCount?.words() ?? 0;
-  const charCount = editor?.storage.characterCount?.characters() ?? 0;
+  const handleSave = () => {
+    onUpdate({ ...card, description });
+  };
+
+  const wordCount = description.trim() ? description.trim().split(/\s+/).length : 0;
+  const charCount = description.length;
 
   return (
     <div className="fixed inset-y-0 right-0 w-[520px] border-l border-gray-800 bg-[#111118] shadow-2xl">
@@ -117,9 +88,13 @@ export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
 
           {/* Editor */}
           <div className="border-t border-gray-800">
-            <TiptapToolbar editor={editor} />
             <div className="bg-[#0a0a0f]">
-              <EditorContent editor={editor} />
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full min-h-[300px] bg-transparent px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none resize-none font-mono text-sm"
+                placeholder="Start writing..."
+              />
             </div>
             
             {/* Word Count */}
@@ -133,7 +108,10 @@ export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
         {/* Footer */}
         <div className="border-t border-gray-800 px-6 py-4">
           <div className="flex gap-3">
-            <button className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500">
+            <button 
+              onClick={handleSave}
+              className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+            >
               Save Changes
             </button>
             <button className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white">
