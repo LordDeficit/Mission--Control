@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { marked } from "marked";
 import { Card } from "@/types";
 
 interface SidePanelProps {
@@ -11,6 +12,7 @@ interface SidePanelProps {
 
 export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
   const [description, setDescription] = useState(card?.description || "");
+  const [preview, setPreview] = useState(false);
   
   useEffect(() => {
     setDescription(card?.description || "");
@@ -40,7 +42,7 @@ export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
   const charCount = description.length;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[520px] border-l border-gray-800 bg-[#111118] shadow-2xl">
+    <div className="fixed inset-y-0 right-0 w-[600px] border-l border-gray-800 bg-[#111118] shadow-2xl">
       <div className="flex h-full flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-800 px-6 py-4">
@@ -86,21 +88,54 @@ export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
             </div>
           </div>
 
-          {/* Editor */}
+          {/* Editor Tabs */}
           <div className="border-t border-gray-800">
+            <div className="flex border-b border-gray-800">
+              <button
+                onClick={() => setPreview(false)}
+                className={`px-4 py-2 text-sm ${!preview ? 'text-white border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => setPreview(true)}
+                className={`px-4 py-2 text-sm ${preview ? 'text-white border-b-2 border-blue-500' : 'text-gray-500 hover:text-gray-300'}`}
+              >
+                Preview
+              </button>
+            </div>
+
             <div className="bg-[#0a0a0f]">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full min-h-[300px] bg-transparent px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none resize-none font-mono text-sm"
-                placeholder="Start writing..."
-              />
+              {!preview ? (
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full min-h-[400px] bg-transparent px-4 py-3 text-gray-300 placeholder-gray-600 focus:outline-none resize-none font-mono text-sm"
+                  placeholder="# Write markdown here...
+
+## Headers work
+- Lists work
+**Bold** and *italic* work too
+
+```code blocks```
+
+[links](url)"
+                />
+              ) : (
+                <div 
+                  className="w-full min-h-[400px] px-4 py-3 prose prose-invert prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: marked.parse(description) }}
+                />
+              )}
             </div>
             
             {/* Word Count */}
-            <div className="flex items-center justify-end gap-4 border-t border-gray-800 px-4 py-2 text-xs text-gray-500">
-              <span>{wordCount.toLocaleString()} words</span>
-              <span>{charCount.toLocaleString()} chars</span>
+            <div className="flex items-center justify-between border-t border-gray-800 px-4 py-2 text-xs text-gray-500">
+              <span>Markdown supported</span>
+              <div className="flex gap-4">
+                <span>{wordCount.toLocaleString()} words</span>
+                <span>{charCount.toLocaleString()} chars</span>
+              </div>
             </div>
           </div>
         </div>
