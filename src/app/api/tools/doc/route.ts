@@ -10,7 +10,6 @@ const SCOPES = [
 ];
 
 async function getAuthClient() {
-  // Read service account credentials from file
   const credPath = join(process.cwd(), "service-account.json");
   const credentials = JSON.parse(readFileSync(credPath, "utf-8"));
   
@@ -36,9 +35,9 @@ export async function POST(req: NextRequest) {
     const docId = doc.data.documentId;
     
     // Add content if provided
-    if (content) {
-      await docs.documents().batchUpdate({
-        documentId: docId!,
+    if (content && docId) {
+      await docs.documents.batchUpdate({
+        documentId: docId,
         requestBody: {
           requests: [
             {
