@@ -8,6 +8,11 @@ export interface Card {
   dueDate?: string;
 }
 
+export interface ArchivedCard extends Card {
+  archivedAt: string;
+  completedAt: string;
+}
+
 export interface Column {
   id: string;
   title: string;

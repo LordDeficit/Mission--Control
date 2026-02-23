@@ -8,9 +8,10 @@ interface SidePanelProps {
   card: Card | null;
   onClose: () => void;
   onUpdate: (updatedCard: Card) => void;
+  onComplete?: (card: Card) => void;
 }
 
-export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
+export default function SidePanel({ card, onClose, onUpdate, onComplete }: SidePanelProps) {
   const [description, setDescription] = useState(card?.description || "");
   const [preview, setPreview] = useState(false);
   
@@ -149,9 +150,18 @@ export default function SidePanel({ card, onClose, onUpdate }: SidePanelProps) {
             >
               Save Changes
             </button>
-            <button className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-400 hover:bg-gray-800 hover:text-white">
-              Archive
-            </button>
+            {onComplete && (
+              <button 
+                onClick={() => {
+                  if (confirm('Mark this task as complete? It will be archived.')) {
+                    onComplete(card);
+                  }
+                }}
+                className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500"
+              >
+                ✓ Complete
+              </button>
+            )}
           </div>
         </div>
       </div>

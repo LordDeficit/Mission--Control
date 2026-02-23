@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, Column } from "@/types";
+import { Card, Column, ArchivedCard } from "@/types";
 import CardComponent from "./Card";
 import SidePanel from "./SidePanel";
 
@@ -80,6 +80,8 @@ export default function Board() {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [draggedCard, setDraggedCard] = useState<Card | null>(null);
   const [draggedFrom, setDraggedFrom] = useState<string | null>(null);
+  const [archivedCards, setArchivedCards] = useState<ArchivedCard[]>([]);
+  const [showArchive, setShowArchive] = useState(false);
 
   const handleDragStart = (card: Card, columnId: string) => {
     setDraggedCard(card);
@@ -131,6 +133,44 @@ export default function Board() {
     setSelectedCard(updatedCard);
   };
 
+  const handleCompleteCard = (card: Card) => {
+    // Archive the card
+    const archived: ArchivedCard = {
+      ...card,
+      archivedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+    };
+    
+    setArchivedCards((prev) => [archived, ...prev]);
+    
+    // Remove from columns
+    setColumns((prev) =>
+      prev.map((col) => ({
+        ...col,
+        cards: col.cards.filter((c) => c.id !== card.id),
+      }))
+    );
+    
+    setSelectedCard(null);
+  };
+
+  const handleRestoreCard = (archivedCard: ArchivedCard) => {
+    // Restore to Done column
+    const { archivedAt, completedAt, ...card } = archivedCard;
+    
+    setColumns((prev) =>
+      prev.map((col) =>
+        col.id === "done"
+          ? { ...col, cards: [...col.cards, card] }
+          : col
+      )
+    );
+    
+    setArchivedCards((prev) =>
+      prev.filter((c) => c.id !== archivedCard.id)
+    );
+  };
+
   const exportStaticHTML = () => {
     const html = `<!DOCTYPE html>...`;
     const blob = new Blob([html], { type: 'text/html' });
@@ -154,60 +194,111 @@ export default function Board() {
           >
             📥 Export Preview
           </button>
-          <span className="text-sm text-gray-500">
-            Download static HTML to view anywhere
-          </span>
+          <button
+            onClick={() => setShowArchive(!showArchive)}
+            className="flex items-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700"
+          >
+            📦 Archive ({archivedCards.length})
+          </button>
         </div>
         <button className="rounded-md bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700">
           + New Card
         </button>
       </div>
 
-      <div className={`flex flex-1 gap-4 overflow-x-auto p-6 transition-all ${selectedCard ? 'pr-[500px]' : ''}`}>
-        {columns.map((column) => (
-          <div
-            key={column.id}
-            className="flex min-w-[300px] flex-1 flex-col rounded-lg border border-gray-800 bg-[#111118]"
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, column.id)}
-          >
-            <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${column.color}`} />
-                <h2 className="font-medium text-white">{column.title}</h2>
-                <span className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">
-                  {column.cards.length}
-                </span>
-              </div>
-              <button className="text-gray-500 hover:text-white">+</button>
-            </div>
-
-            <div className="flex-1 space-y-3 overflow-y-auto p-3">
-              {column.cards.map((card) => (
-                <div key={card.id} onClick={() => handleCardClick(card)}>
-                  <CardComponent
-                    card={card}
-                    tagColors={tagColors}
-                    onDragStart={() => handleDragStart(card, column.id)}
-                  />
+      {showArchive ? (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">Archived Cards</h2>
+            <button
+              onClick={() => setShowArchive(false)}
+              className="text-sm text-gray-400 hover:text-white"
+            >
+              ← Back to Board
+            </button>
+          </div>
+          
+          {archivedCards.length === 0 ? (
+            <p className="text-gray-500">No archived cards yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {archivedCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="rounded-lg border border-gray-800 bg-[#111118] p-4"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-white">{card.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Completed: {new Date(card.completedAt).toLocaleDateString()}
+                      </p>
+                      {card.tag && (
+                        <span className={`mt-2 inline-block rounded border px-2 py-0.5 text-xs ${tagColors[card.tag]}`}>
+                          {card.tag}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleRestoreCard(card)}
+                      className="text-sm text-blue-400 hover:text-blue-300"
+                    >
+                      Restore
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        ))}
-
-        <div className="flex min-w-[300px] items-start">
-          <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-700 bg-[#111118]/50 px-4 py-3 text-sm text-gray-500 hover:border-gray-600 hover:text-gray-400">
-            + Add Column
-          </button>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className={`flex flex-1 gap-4 overflow-x-auto p-6 transition-all ${selectedCard ? 'pr-[500px]' : ''}`}>
+          {columns.map((column) => (
+            <div
+              key={column.id}
+              className="flex min-w-[300px] flex-1 flex-col rounded-lg border border-gray-800 bg-[#111118]"
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, column.id)}
+            >
+              <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${column.color}`} />
+                  <h2 className="font-medium text-white">{column.title}</h2>
+                  <span className="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">
+                    {column.cards.length}
+                  </span>
+                </div>
+                <button className="text-gray-500 hover:text-white">+</button>
+              </div>
+
+              <div className="flex-1 space-y-3 overflow-y-auto p-3">
+                {column.cards.map((card) => (
+                  <div key={card.id} onClick={() => handleCardClick(card)}>
+                    <CardComponent
+                      card={card}
+                      tagColors={tagColors}
+                      onDragStart={() => handleDragStart(card, column.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="flex min-w-[300px] items-start">
+            <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-700 bg-[#111118]/50 px-4 py-3 text-sm text-gray-500 hover:border-gray-600 hover:text-gray-400">
+              + Add Column
+            </button>
+          </div>
+        </div>
+      )}
 
       {selectedCard && (
         <SidePanel
           card={selectedCard}
           onClose={() => setSelectedCard(null)}
           onUpdate={handleUpdateCard}
+          onComplete={handleCompleteCard}
         />
       )}
     </div>
