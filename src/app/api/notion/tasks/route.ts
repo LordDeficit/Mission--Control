@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFileSync } from "fs";
-import { join } from "path";
 
-const NOTION_KEY = readFileSync(join(process.env.HOME || "/root", ".config/notion/api_key"), "utf-8").trim();
-
+const NOTION_KEY = process.env.NOTION_API_KEY;
 const NOTION_API = "https://api.notion.com/v1";
 
 // Helper to make Notion API calls
