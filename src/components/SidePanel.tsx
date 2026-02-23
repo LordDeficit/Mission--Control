@@ -9,9 +9,10 @@ interface SidePanelProps {
   onClose: () => void;
   onUpdate: (updatedCard: Card) => void;
   onComplete?: (card: Card) => void;
+  onDelete?: (cardId: string) => void;
 }
 
-export default function SidePanel({ card, onClose, onUpdate, onComplete }: SidePanelProps) {
+export default function SidePanel({ card, onClose, onUpdate, onComplete, onDelete }: SidePanelProps) {
   const [description, setDescription] = useState(card?.description || "");
   const [preview, setPreview] = useState(false);
   
@@ -163,6 +164,18 @@ export default function SidePanel({ card, onClose, onUpdate, onComplete }: SideP
               </button>
             )}
           </div>
+          {onDelete && (
+            <button 
+              onClick={() => {
+                if (confirm('Delete this task? This cannot be undone.')) {
+                  onDelete(card.id);
+                }
+              }}
+              className="mt-3 w-full rounded-md border border-red-900/50 px-4 py-2 text-sm text-red-400 hover:bg-red-900/20"
+            >
+              Delete Task
+            </button>
+          )}
         </div>
       </div>
     </div>
